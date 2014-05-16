@@ -7,28 +7,28 @@ import re
 
 import pdb
 
-# consumer_key = "QgUvx8L4wcyhVbD7X2GkXwyYT"
-# consumer_secret = "dwRK6TtYsTAALzOSBWhmpujC4eoeVzqYxzfono0irO8B8bvwzL"
+consumer_key = "QgUvx8L4wcyhVbD7X2GkXwyYT"
+consumer_secret = "dwRK6TtYsTAALzOSBWhmpujC4eoeVzqYxzfono0irO8B8bvwzL"
 
-# access_token = "19383289-bSwFXjI56RLY0HD4fNmHB1TH48Zy32VWwkN8mcbsl"
-# access_token_secret = "WbXrw6fwI7tADxmLifd2HMFSb7r29QW3Dk9z39HCF2SWH"
+access_token = "19383289-bSwFXjI56RLY0HD4fNmHB1TH48Zy32VWwkN8mcbsl"
+access_token_secret = "WbXrw6fwI7tADxmLifd2HMFSb7r29QW3Dk9z39HCF2SWH"
 
-# auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
-# auth.set_access_token(access_token, access_token_secret)
+auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+auth.set_access_token(access_token, access_token_secret)
 
-# api = tweepy.API(auth)
+api = tweepy.API(auth)
 
 
-# ## Get the tweets from austinanimals and extract url
-# austinanimals_timeline = api.user_timeline(id="austinanimals", count=10)
-# tinyuri_urls = []
+## Get the tweets from austinanimals and extract url
+austinanimals_timeline = api.user_timeline(id="austinanimals", count=10)
+tinyuri_urls = []
 
-# for i in range(len(austinanimals_timeline)):
-#     txt =  austinanimals_timeline[i].text
-#     search_result = re.search(r'(http.*)', txt)
+for i in range(len(austinanimals_timeline)):
+    txt =  austinanimals_timeline[i].text
+    search_result = re.search(r'(http.*)', txt)
 
-#     if search_result:
-#         tinyuri_urls.append(search_result.group(1))
+    if search_result:
+        tinyuri_urls.append(search_result.group(1))
 
 
 
@@ -48,7 +48,22 @@ def get_pet_info(url):
     'Obtain pet information and return the list of petClass objects'
 
     soup = make_soup(url)
+
     textbody = soup.find("div", id="text")
+
+    if textbody==None:
+        # url_redirect = re.search(r'url=(.+)\"\s',str(soup.find("meta", attrs={'content': re.compile('url')}))).group(1)
+
+        pdb.set_trace()
+        url_redirect = re.search(r'url=(.+)\"\s', \
+                                 str(soup.find("meta", attrs={'http-equiv': re.compile(r'(r|R)efresh')}))).group(1)
+
+        print "url_redirect = " + url_redirect
+
+        soup = make_soup(url_redirect)
+
+    # pdb.set_trace()
+    # print textbody
     text_contents = textbody.contents
 
     pets = []
@@ -73,20 +88,36 @@ def get_pet_info(url):
         pet = petClass() 
         pet.petID = petID
         pet.pet_type = pettype
-        pet.addr = addr
+        pet.addr = addr.replace('/', ' and ') + ' TX' # +'Austin'
         pet.petinfo = petinfo
         pet.link = link
+
+        # geocoding using Google V3 API
+        g = geocoders.GoogleV3(api_key='AIzaSyB7LvwvLJN0l04rFfHbIyUBsqi61vP6qWA')
+        place, (lat, lng) = g.geocode(pet.addr)  
+
+        pet.place = place
+        pet.lat = lat
+        pet.lng = lng
+
+
 
         pets.append(pet)
 
     return pets
 
-# def get_pet_information(url):
 
-#     soup = make_soup(url)
-#     td = soup.find("td", class="DetailDesc")
+A = []
+for i in range(len(tinyuri_urls)):
+    A += get_pet_info(tinyuri_urls[i])
 
-    # td.find("font")
+for pt in A:
+    print pt.petID
+    print pt.pet_type
+    print pt.addr
+    print pt.petinfo
+    print pt.link 
+    print pt.place
+    print pt.lat 
+    print pt.lng
 
-
-A= get_petharbor_links(tinyuri_urls[0])

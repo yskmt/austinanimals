@@ -15,10 +15,9 @@
   <body>
     <p>
       <select name="genre" multiple="multiple">
-        <option value="asian">Asian</option>
-        <option value="american">American</option>
-        <option value="mexican">Mexican</option>
-        <option value="deserts">Deserts</option>
+        <option value="dog">Dog</option>
+        <option value="cat">Cat</option>
+        <option value="others">Others</option>
       </select>
       <div id='selected_genres'></div>
 
@@ -49,16 +48,18 @@
 
 				var str = "";
 				$("select option:selected").each(function() {
-					if ($(this).val() === "asian") {
-
+					if ($(this).val() === "dog") {
 						$.each(pet_arr, function(index, value) {
-							// console.log(chilantro_truck1[key][0] + " " + chilantro_truck1[key][1]);
-							addPetMarker(map, value);
+							if (value.pet_type === 'DOG'){
+							 addPetMarker(map, value);
+							}
 						});
-					} else if ($(this).val() === "american") {
-						// $.each(chilantro_truck2, function(key, value) {
-							// addTrailerMarker(map, key, value);
-						// });
+					} else if ($(this).val() === "cat") {
+            $.each(pet_arr, function(index, value) {
+              if (value.pet_type === 'CAT'){
+               addPetMarker(map, value);
+              }
+            });
 					}
 
 				});

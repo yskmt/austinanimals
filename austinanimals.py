@@ -15,6 +15,22 @@ consumer_secret = "dwRK6TtYsTAALzOSBWhmpujC4eoeVzqYxzfono0irO8B8bvwzL"
 access_token = "19383289-bSwFXjI56RLY0HD4fNmHB1TH48Zy32VWwkN8mcbsl"
 access_token_secret = "WbXrw6fwI7tADxmLifd2HMFSb7r29QW3Dk9z39HCF2SWH"
 
+lat_ofs = 5e-4
+lng_ofs = 5e-4
+
+# empty object to hold pet information
+class petClass:
+    def __init__(self):
+        self.addr = None
+        self.lat = None
+        self.link = None
+        self.image_link = None
+        self.lng = None
+        self.petID = None
+        self.pet_type = None
+        self.petinfo = None
+        self.place = None
+
 
 def make_soup(url):
     # need to set user-agent
@@ -24,18 +40,18 @@ def make_soup(url):
 
     return BeautifulSoup(page, "lxml")
 
-# empty object to hold pet information
-class petClass:
-    def __init__(self):
-        self.addr = None
-        self.lat = None
-        self.link = None
-        self.lng = None
-        self.petID = None
-        self.pet_type = None
-        self.petinfo = None
-        self.place = None
+def get_pet_image(url):
 
+    image_link = ''
+    soup = make_soup(url)
+
+    if soup:
+        table = soup.find('table')
+    if table:
+        image_link = table.find('img')
+
+    # to be used outside from petharbor
+    return str(image_link).replace('src=\"', 'src=\"http://www.petharbor.com/')
 
 def geocode(g, addr):
 
@@ -113,12 +129,13 @@ def get_pet_info(url):
 
                         place, (lat, lng) = geocode(g, pet.addr)  
                         pet.place = place
-                        pet.lat = lat
-                        pet.lng = lng
+                        pet.lat = lat + lat_ofs* (random.random())
+                        pet.lng = lng + lng_ofs* (random.random())
                     else:
                         petinfo.append(petdesc[j].strip())
 
             link =  text_contents[i*2+1].string
+            image_link = get_pet_image(link)
 
             if any([a==None for a in [petID, pettype, petdesc]]):
                 print petregex
@@ -127,6 +144,7 @@ def get_pet_info(url):
             pet.pet_type = pettype
             pet.petinfo = petinfo
             pet.link = link
+            pet.image_link = image_link
 
             pets.append(pet)
 

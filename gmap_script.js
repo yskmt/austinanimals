@@ -43,7 +43,7 @@ function showMainMap(result, status) {
 		}
 
 		var options = {
-			zoom : 12,
+			zoom : 11,
 			center : latlng,
 			mapTypeId : google.maps.MapTypeId.ROADMAP,
 			panControl : true,
@@ -94,8 +94,12 @@ function addPetMarker(map, pet) {
 
 function petInfoWindow(map, marker, pet, trailerLatLng) {
 
+	infoContent = '<p>' + pet.petinfo.join(" ") + '</p>'
+	+ '<a href="' + pet.link + '">' + 'details</a>' + pet.image_link;
+	// '<img border="1" height="300" oncontextmenu="return false" src="http://www.petharbor.com/get_image.asp?RES=Detail&amp;ID=A679223&amp;LOCATION=ASTN"/>';
+
 	var infoWindow = new google.maps.InfoWindow({
-		content : pet.petinfo.join(" "),
+		content : infoContent,
 		position : map.getCenter(),
 		maxWidth: 320
 	});

@@ -98,9 +98,10 @@ function petInfoWindow(map, marker, pet, trailerLatLng) {
 	+ '<a href="' + pet.link + '">' + 'details</a>' + pet.image_link;
 	// '<img border="1" height="300" oncontextmenu="return false" src="http://www.petharbor.com/get_image.asp?RES=Detail&amp;ID=A679223&amp;LOCATION=ASTN"/>';
 
+    map_position = map.getCenter();
 	var infoWindow = new google.maps.InfoWindow({
 		content : infoContent,
-		position : map.getCenter(),
+		position : map_position,
 		maxWidth: 320
 	});
 	google.maps.event.addListener(marker, 'click', function() {

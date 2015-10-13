@@ -1,74 +1,80 @@
 <html>
-  <head>
-    <meta charset="UTF-8">
-    <title> Recued Pets Tracker </title>
-    <script src="http://maps.google.com/maps/api/js?sensor=true"></script>
-    <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+    <head>
+        <meta charset="UTF-8">
+        <title> Recued Pets Tracker </title>
+        <script src="http://maps.google.com/maps/api/js?sensor=true"></script>
+        <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
 
-    <style>
-			#map {
-				width: 100%;
-				height: 100%;
-			}
-    </style>
-  </head>
-  <body>
-    <p>
-      <select name="genre" multiple="multiple">
-        <option value="dog">Dog</option>
-        <option value="cat">Cat</option>
-        <option value="others">Others</option>
-      </select>
-      <div id='selected_genres'></div>
-
-      Address:
-      <input type="text" id="address" value="">
-      <input type="button" value="show!" onclick="moveMap();">
-    </p>
-
-    <div id="map"></div>
+        <style>
+		 #map {
+			 width: 100%;
+			 height: 90%;
+		 }
+        </style>
+    </head>
     
-    <script src="pets.js"></script>
-    <script src="gmap_script.js"></script>
+    <body style="font-family:sans-serif">
+        <!-- Address:
+        <input type="text" id="address" value="">
+        <input type="button" value="show!" onclick="moveMap();">
+        -->
+        Click on animal icons to see more information.
+        <form id="cboxes">
+            <button id="reset">Reset</button>
+            <input type="checkbox" id="dog" value="dog">Dog</input>
+            <input type="checkbox" id="cat" value="cat">Cat</input>
+            <input type="checkbox" id="others" value="others">Others</input>
+        </form>
+        <div id="map"></div>
 
+        <script src="pets.js"></script>
+        <script src="gmap_script.js"></script>
+        
     <script>
-			var markersArray = [];
+	 var markersArray = [];
 
-			// deselect the choice
-			$("select").prop("selectedIndex", -1);
+	 // Check the choice
+     $('#dog').prop('checked', true);
+     $('#cat').prop('checked', true);
+     $('#others').prop('checked', true);
+     
 
-      // SELECT
-			$("select").change(function() {
+     // Reset map
+     $("#reset").click(function(){
+         $('#dog').prop('checked', false);
+         $('#cat').prop('checked', false);
+         $('#others').prop('checked', false);
+     }); 
 
-				// remove all markers first
-				for (var i = 0; i < markersArray.length; i++) {
-					markersArray[i].setMap(null);
-				}
-				markersArray.length = 0;
+     // SELECT
+	 $('#cboxes :checkbox').change(function() {
+		 // remove all markers first
+		 for (var i = 0; i < markersArray.length; i++) {
+		     markersArray[i].setMap(null);
+		 }
+		 markersArray.length = 0;
+         
+		 var str = "";
+		 $("#cboxes :checkbox:checked").each(function() {
+		     if ($(this).val() === "dog") {
+		         $.each(pet_arr, function(index, value) {
+		             if (value.pet_type === 'DOG'){
+		                 addPetMarker(map, value);
+		             }
+		         });
+		     } else if ($(this).val() === "cat") {
+                 $.each(pet_arr, function(index, value) {
+                     if (value.pet_type === 'CAT'){
+                         addPetMarker(map, value);
+                     }
+                 });
+		     }
+		 });
+	 });
 
-				var str = "";
-				$("select option:selected").each(function() {
-					if ($(this).val() === "dog") {
-						$.each(pet_arr, function(index, value) {
-							if (value.pet_type === 'DOG'){
-							 addPetMarker(map, value);
-							}
-						});
-					} else if ($(this).val() === "cat") {
-            $.each(pet_arr, function(index, value) {
-              if (value.pet_type === 'CAT'){
-               addPetMarker(map, value);
-              }
-            });
-					}
-
-				});
-			});
-			// .trigger("change") causes addTrailerMarker to be called in the beginning
-
-
+     setTimeout(function(){ $('#cboxes :checkbox').trigger("change"); }, 1000);
 
     </script>
 
-  </body>
+    </body>
 </html>

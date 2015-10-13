@@ -1,10 +1,22 @@
+"""austinanimals.py
+
+Scrape Austin Animal Center tweets
+(https://twitter.com/austinanimals), get the information of the lost
+animals, and export it to js file.
+
+depndency:
+tweepy, geopy
+
+"""
+
+
 import tweepy
 from geopy import geocoders
 from bs4 import BeautifulSoup
-from urllib2 import urlopen, Request
+from urllib2 import urlopen, Request, HTTPError
 
 import json
-
+import random
 import re
 
 import pdb
@@ -19,7 +31,10 @@ lat_ofs = 5e-4
 lng_ofs = 5e-4
 
 # empty object to hold pet information
+
+
 class petClass:
+
     def __init__(self):
         self.addr = None
         self.lat = None
@@ -35,10 +50,11 @@ class petClass:
 def make_soup(url):
     # need to set user-agent
     hdr = {'User-Agent': 'Mozilla/5.0'}
-    req = Request(url,headers=hdr)
+    req = Request(url, headers=hdr)
     page = urlopen(req)
 
     return BeautifulSoup(page, "lxml")
+
 
 def get_pet_image(url):
 
@@ -53,14 +69,15 @@ def get_pet_image(url):
     # to be used outside from petharbor
     return str(image_link).replace('src=\"', 'src=\"http://www.petharbor.com/')
 
+
 def geocode(g, addr):
 
     # try Texas
-    results = g.geocode(addr+' Texas', exactly_one=False)
+    results = g.geocode(addr + ' Texas', exactly_one=False)
 
     for place, (lat, lng) in results:
         if re.search(r'(Austin|Lakeway|Llano|Del Valle|Manor|Driftwood)', place):
-            # print "%s: %.5f, %.5f" % (place, lat, lng)  
+            # print "%s: %.5f, %.5f" % (place, lat, lng)
             return place, (lat, lng)
 
     for place, (lat, lng) in results:
@@ -68,38 +85,46 @@ def geocode(g, addr):
             return place, (lat, lng)
 
     # try Austin TX
-    results = g.geocode(addr+' Austin, Texas', exactly_one=False)
+    results = g.geocode(addr + ' Austin, Texas', exactly_one=False)
 
     for place, (lat, lng) in results:
         if re.search(r'(Austin|Lakeway|Llano|Del Valle|Manor|Driftwood)', place):
-            # print "%s: %.5f, %.5f" % (place, lat, lng)  
+            # print "%s: %.5f, %.5f" % (place, lat, lng)
             return place, (lat, lng)
 
     for place, (lat, lng) in results:
         if re.search(r'TX', place):
             return place, (lat, lng)
 
-
     return results[0]
+
 
 def get_pet_info(url):
     'Obtain pet information and return the list of petClass objects'
 
-    soup = make_soup(url)
-
+    try:
+        soup = make_soup(url)
+    except HTTPError:
+        return None
+    except:
+        pdb.set_trace()
+        return None
+    
     textbody = soup.find("div", id="text")
 
-    if textbody==None:
+    if textbody == None:
         # url_redirect = re.search(r'url=(.+)\"\s',str(soup.find("meta", attrs={'content': re.compile('url')}))).group(1)
-
-        url_redirect = re.search(r'url=(.+)\"\s', \
-                                 str(soup.find("meta", attrs={'http-equiv': re.compile(r'(r|R)efresh')}))).group(1)
-
+        try:
+            url_redirect = re.search(r'url=(.+)\"\s',
+                                     str(soup.find("meta", attrs={'http-equiv': re.compile(r'(r|R)efresh')}))).group(1)
+        except:
+            # not the right url
+            return None
+            
         print "url_redirect = " + url_redirect
 
         soup = make_soup(url_redirect)
         textbody = soup.find("div", id="text")
-
 
     # print textbody
     text_contents = textbody.contents
@@ -108,36 +133,37 @@ def get_pet_info(url):
     g = geocoders.GoogleV3(api_key='AIzaSyB7LvwvLJN0l04rFfHbIyUBsqi61vP6qWA')
 
     pets = []
-    for i in range(len(text_contents)/2):
-        petregex = re.search(r'(\d+\))(.+):.*(DOG|CAT|BIRD)(.*)', text_contents[i*2])
+    for i in range(len(text_contents) / 2):
+        petregex = re.search(
+            r'(\d+\))(.+):.*(DOG|CAT|BIRD)(.*)', text_contents[i * 2])
 
         if petregex:
-            pet = petClass() 
+            pet = petClass()
 
-            petID = petregex.group(2).replace(' ','')
-            pettype = petregex.group(3).replace(' ','')
+            petID = petregex.group(2).replace(' ', '')
+            pettype = petregex.group(3).replace(' ', '')
             petdesc = petregex.group(4).split(',')
             addr = ''
 
             petinfo = []
             for j in range(len(petdesc)):
-                if (len(petdesc[j]) != 0) or (re.match('\s+',petdesc[j]) != None):
-                    addr_re = re.search(r'found at (.*)',petdesc[j])
+                if (len(petdesc[j]) != 0) or (re.match('\s+', petdesc[j]) != None):
+                    addr_re = re.search(r'found at (.*)', petdesc[j])
                     if addr_re:
                         addr = addr_re.group(1)
                         pet.addr = addr.replace('/', ' and ')
 
-                        place, (lat, lng) = geocode(g, pet.addr)  
+                        place, (lat, lng) = geocode(g, pet.addr)
                         pet.place = place
-                        pet.lat = lat + lat_ofs* (random.random())
-                        pet.lng = lng + lng_ofs* (random.random())
+                        pet.lat = lat + lat_ofs * (random.random())
+                        pet.lng = lng + lng_ofs * (random.random())
                     else:
                         petinfo.append(petdesc[j].strip())
 
-            link =  text_contents[i*2+1].string
+            link = text_contents[i * 2 + 1].string
             image_link = get_pet_image(link)
 
-            if any([a==None for a in [petID, pettype, petdesc]]):
+            if any([a == None for a in [petID, pettype, petdesc]]):
                 print petregex
 
             pet.petID = petID
@@ -154,35 +180,38 @@ def get_pet_info(url):
     return pets
 
 
+# Authenticate to Twitter
 auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 auth.set_access_token(access_token, access_token_secret)
-
 api = tweepy.API(auth)
 
-
-## Get the tweets from austinanimals and extract url
+# Get the tweets from austinanimals and extract url
 austinanimals_timeline = api.user_timeline(id="austinanimals", count=10)
 tinyuri_urls = []
 
 for i in range(len(austinanimals_timeline)):
-    txt =  austinanimals_timeline[i].text
-    search_result = re.search(r'(http.*)', txt)
+    txt = austinanimals_timeline[i].text
+    search_result = re.search(r'(http://t\.co.*)', txt)
 
     if search_result:
-        tinyuri_urls.append(search_result.group(1))
+        url = search_result.group(1).split(' ')[0]
+        tinyuri_urls.append(url)
 
+# Get the lost animal information from tinyurls
 A = []
 for i in range(len(tinyuri_urls)):
-    A += get_pet_info(tinyuri_urls[i])
+    pet_info = get_pet_info(tinyuri_urls[i])
+    if pet_info is not None:
+        A += pet_info
 
 for pt in A:
     # print pt.petID
     # print pt.pet_type
     # print pt.addr
     # print pt.petinfo
-    # print pt.link 
+    # print pt.link
     print pt.place
-    # print pt.lat 
+    # print pt.lat
     # print pt.lng
 
 
@@ -192,8 +221,5 @@ with open('pets.js', 'w') as f:
         f.write('pet_arr.push({0:s});\n'.format(json.dumps(A[i].__dict__)))
 
 
-
 # # geocoding using Google V3 API
 # g = geocoders.GoogleV3(api_key='AIzaSyB7LvwvLJN0l04rFfHbIyUBsqi61vP6qWA')
-
-
